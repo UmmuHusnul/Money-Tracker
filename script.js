@@ -8,40 +8,46 @@ const categories = {
     expense: ['Makanan', 'Transportasi', 'Belanja', 'Hiburan', 'Investasi', 'Tagihan', 'Lainnya']
 };
 
+// --- Theme Logic ---
 const toggleSwitch = document.querySelector('#checkbox');
 const currentTheme = localStorage.getItem('theme');
 
 if (currentTheme) {
     document.documentElement.setAttribute('data-theme', currentTheme);
     if (currentTheme === 'dark') {
-        toggleSwitch.checked = true;
-        document.querySelector('.mode-icon').textContent = '🌙';
+        if(toggleSwitch) toggleSwitch.checked = true;
+        const icon = document.querySelector('.mode-icon');
+        if(icon) icon.textContent = '🌙';
     }
 }
 
-toggleSwitch.addEventListener('change', (e) => {
-    if (e.target.checked) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        localStorage.setItem('theme', 'dark');
-        document.querySelector('.mode-icon').textContent = '🌙';
-    } else {
-        document.documentElement.setAttribute('data-theme', 'light');
-        localStorage.setItem('theme', 'light');
-        document.querySelector('.mode-icon').textContent = '☀️';
-    }
-});
+if(toggleSwitch) {
+    toggleSwitch.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            document.querySelector('.mode-icon').textContent = '🌙';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            document.querySelector('.mode-icon').textContent = '☀️';
+        }
+    });
+}
 
-
+// --- Core Functions ---
 function init() {
     updateMonthDisplay();
     loadMonthData();
     updateCategoryOptions();
     calculateBalances();
     renderList();
+    setDefaultDate(); 
 }
 
 function loadMonthData() {
     const monthKey = getMonthKey(viewDate);
+    // Mengambil data transaksi terbaru dari storage
     transactions = JSON.parse(localStorage.getItem(`money_trans_${monthKey}`)) || [];
     initialBalances = JSON.parse(localStorage.getItem(`money_init_${monthKey}`));
 
@@ -51,13 +57,17 @@ function loadMonthData() {
 }
 
 function setDefaultDate() {
+    const dateInput = document.getElementById('date');
+    if (!dateInput) return;
+
     const today = new Date();
+    // Jika melihat bulan berjalan, set ke hari ini. Jika tidak, set ke tanggal 1.
     if (viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear()) {
-        document.getElementById('date').value = today.toISOString().split('T')[0];
+        dateInput.value = today.toISOString().split('T')[0];
     } else {
         const year = viewDate.getFullYear();
         const month = (viewDate.getMonth() + 1).toString().padStart(2, '0');
-        document.getElementById('date').value = `${year}-${month}-01`;
+        dateInput.value = `${year}-${month}-01`;
     }
 }
 
@@ -75,27 +85,29 @@ function handleMonthTransition() {
         });
         initialBalances = carryOver;
         localStorage.setItem(`money_init_${getMonthKey(viewDate)}`, JSON.stringify(initialBalances));
+        calculateBalances();
     } else {
         document.getElementById('setup-modal').style.display = 'flex';
     }
 }
 
 function saveInitialBalance() {
-    // Otomatis 0 jika kosong
     const cash = parseFloat(document.getElementById('init-cash').value) || 0;
     const bank = parseFloat(document.getElementById('init-bank').value) || 0;
     const qris = parseFloat(document.getElementById('init-qris').value) || 0;
 
-    const key = getMonthKey(viewDate);
     initialBalances = { cash, bank, qris };
-    localStorage.setItem(`money_init_${key}`, JSON.stringify(initialBalances));
+    localStorage.setItem(`money_init_${getMonthKey(viewDate)}`, JSON.stringify(initialBalances));
     
     document.getElementById('setup-modal').style.display = 'none';
     init();
 }
 
 function updateCategoryOptions() {
-    const type = document.querySelector('input[name="transaction-type"]:checked').value;
+    const checkedType = document.querySelector('input[name="transaction-type"]:checked');
+    if(!checkedType) return;
+    
+    const type = checkedType.value;
     const select = document.getElementById('category');
     select.innerHTML = '<option value="">Pilih Kategori</option>';
     categories[type].forEach(cat => {
@@ -107,16 +119,30 @@ function updateCategoryOptions() {
 
 function calculateBalances() {
     if (!initialBalances) return;
-    const totals = { income: 0, expense: 0, cash: initialBalances.cash, bank: initialBalances.bank, qris: initialBalances.qris };
+    
+    // Reset hitungan dari saldo awal
+    const totals = { 
+        income: 0, 
+        expense: 0, 
+        cash: initialBalances.cash, 
+        bank: initialBalances.bank, 
+        qris: initialBalances.qris 
+    };
 
+    // Kalkulasi ulang berdasarkan sisa transaksi di array
     transactions.forEach(t => {
         const val = t.type === 'income' ? t.amount : -t.amount;
         if (t.type === 'income') totals.income += t.amount;
         else totals.expense += t.amount;
-        totals[t.wallet] += val;
+        
+        if (totals.hasOwnProperty(t.wallet)) {
+            totals[t.wallet] += val;
+        }
     });
 
     const grandTotal = totals.cash + totals.bank + totals.qris;
+    
+    // Update tampilan DOM
     document.getElementById('total-balance').innerText = `Rp ${grandTotal.toLocaleString()}`;
     document.getElementById('total-income').innerText = `Rp ${totals.income.toLocaleString()}`;
     document.getElementById('total-expense').innerText = `Rp ${totals.expense.toLocaleString()}`;
@@ -129,6 +155,8 @@ function calculateBalances() {
 
 function renderList() {
     const list = document.getElementById('transaction-list');
+    if(!list) return;
+    
     list.innerHTML = '';
     [...transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(t => {
         const li = document.createElement('li');
@@ -147,6 +175,7 @@ function renderList() {
     });
 }
 
+// --- Event Listeners ---
 document.getElementById('transaction-form').addEventListener('submit', (e) => {
     e.preventDefault();
     
@@ -172,11 +201,13 @@ document.getElementById('transaction-form').addEventListener('submit', (e) => {
     transactions.push(trans);
     localStorage.setItem(`money_trans_${getMonthKey(viewDate)}`, JSON.stringify(transactions));
     
+    // Reset input tertentu
     amountInput.value = '';
     document.getElementById('note').value = '';
     
-    init();
+    init(); // Refresh semua tampilan
 });
+
 document.querySelectorAll('input[name="transaction-type"]').forEach(r => {
     r.addEventListener('change', updateCategoryOptions);
 });
@@ -186,10 +217,13 @@ function deleteTransaction(id) {
     modal.style.display = 'flex'; 
     
     document.getElementById('confirm-delete-btn').onclick = function() {
+        // Hapus dari array
         transactions = transactions.filter(t => t.id !== id);
+        // Simpan ke localStorage
         localStorage.setItem(`money_trans_${getMonthKey(viewDate)}`, JSON.stringify(transactions));
+        
         closeDeleteModal();
-        init();
+        init(); // JALANKAN INI: Menghitung ulang saldo dan gambar ulang list
     };
 }
 
@@ -208,11 +242,15 @@ function getMonthKey(date) {
 
 function updateMonthDisplay() {
     const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    document.getElementById('month-display').innerText = `${months[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+    const display = document.getElementById('month-display');
+    if(display) display.innerText = `${months[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
 }
 
 function updateChart(inc, exp) {
-    const ctx = document.getElementById('transactionChart').getContext('2d');
+    const canvas = document.getElementById('transactionChart');
+    if(!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
     if (myChart) myChart.destroy();
     myChart = new Chart(ctx, {
         type: 'doughnut',
@@ -236,14 +274,11 @@ function exportToCSV() {
 }
 
 window.onclick = function(event) {
-    const setupModal = document.getElementById('setup-modal');
     const deleteModal = document.getElementById('delete-modal');
-    
-    if (event.target == setupModal) {
-    }
     if (event.target == deleteModal) {
         closeDeleteModal();
     }
 }
 
+// Jalankan aplikasi
 init();
