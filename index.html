@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Money Tracker</h1>
+            <div class="month-nav">
+                <button onclick="changeMonth(-1)">◀</button>
+                <h2 id="month-display">Maret 2026</h2>
+                <button onclick="changeMonth(1)">▶</button>
+            </div>
+        </header>
+
+        <section class="dashboard">
+            <div class="card balance-card">
+                <span>Total Saldo (Bulan Ini)</span>
+                <h2 id="total-balance">Rp 0</h2>
+            </div>
+            
+            <div class="wallet-grid">
+                <div class="card wallet-item">
+                    <span>Cash 💵</span>
+                    <h4 id="wallet-cash">Rp 0</h4>
+                </div>
+                <div class="card wallet-item">
+                    <span>Bank 🏦</span>
+                    <h4 id="wallet-bank">Rp 0</h4>
+                </div>
+                <div class="card wallet-item">
+                    <span>QRIS 📱</span>
+                    <h4 id="wallet-qris">Rp 0</h4>
+                </div>
+            </div>
+
+            <div class="summary-grid">
+                <div class="card income-card">
+                    <span>Pemasukan</span>
+                    <h4 id="total-income">Rp 0</h4>
+                </div>
+                <div class="card expense-card">
+                    <span>Pengeluaran</span>
+                    <h4 id="total-expense">Rp 0</h4>
+                </div>
+            </div>
+        </section>
+
+        <div class="main-content">
+            <div class="card chart-container">
+                <canvas id="transactionChart"></canvas>
+            </div>
+
+            <div class="card form-container">
+                <h3>Tambah Transaksi</h3>
+                <form id="transaction-form">
+                    <div class="type-selector">
+                        <label>
+                            <input type="radio" name="transaction-type" value="income" checked> 
+                            <span>Pemasukan</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="transaction-type" value="expense"> 
+                            <span>Pengeluaran</span>
+                        </label>
+                    </div>
+
+                    <input type="number" id="amount" placeholder="Jumlah (Rp)" required>
+                    
+                    <div class="row-input">
+                        <select id="wallet-type" required>
+                            <option value="">Dompet</option>
+                            <option value="cash">Cash</option>
+                            <option value="bank">Bank</option>
+                            <option value="qris">QRIS</option>
+                        </select>
+                        <select id="category" required></select>
+                    </div>
+
+                    <input type="date" id="date" required>
+                    <input type="text" id="note" placeholder="Catatan (Opsional)">
+                    <button type="submit" class="btn-primary">Simpan Transaksi</button>
+                </form>
+            </div>
+        </div>
+
+        <section class="history card">
+            <div class="history-header">
+                <h3>Riwayat Transaksi</h3>
+                <button onclick="exportToCSV()" class="btn-secondary">Export 📥</button>
+            </div>
+            <ul id="transaction-list"></ul>
+        </section>
+    </div>
+
+    <div id="setup-modal" class="modal">
+        <div class="modal-content card">
+            <h3>Halo! 👋</h3>
+            <p>Masukkan saldo awal dompetmu untuk bulan ini:</p>
+            <div class="setup-inputs">
+                <input type="number" id="init-cash" placeholder="Saldo Cash (Rp)">
+                <input type="number" id="init-bank" placeholder="Saldo Bank (Rp)">
+                <input type="number" id="init-qris" placeholder="Saldo QRIS (Rp)">
+            </div>
+            <button onclick="saveInitialBalance()" class="btn-primary">Mulai Mencatat</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
