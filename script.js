@@ -159,11 +159,19 @@ document.querySelectorAll('input[name="transaction-type"]').forEach(r => {
 });
 
 function deleteTransaction(id) {
-    if(confirm('Hapus transaksi?')) {
+    const modal = document.getElementById('delete-modal');
+    modal.style.display = 'flex'; 
+    
+    document.getElementById('confirm-delete-btn').onclick = function() {
         transactions = transactions.filter(t => t.id !== id);
         localStorage.setItem(`money_trans_${getMonthKey(viewDate)}`, JSON.stringify(transactions));
+        closeDeleteModal();
         init();
-    }
+    };
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').style.display = 'none';
 }
 
 function changeMonth(offset) {
