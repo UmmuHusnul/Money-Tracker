@@ -138,22 +138,34 @@ function renderList() {
 
 document.getElementById('transaction-form').addEventListener('submit', (e) => {
     e.preventDefault();
+    
+    const amountInput = document.getElementById('amount');
+    const categorySelect = document.getElementById('category');
+    const walletSelect = document.getElementById('wallet-type');
+
+    if (parseFloat(amountInput.value) <= 0 || !categorySelect.value || !walletSelect.value) {
+        alert("Mohon isi semua data dengan benar!");
+        return;
+    }
+
     const trans = {
         id: Date.now(),
         type: document.querySelector('input[name="transaction-type"]:checked').value,
-        amount: parseFloat(document.getElementById('amount').value),
-        wallet: document.getElementById('wallet-type').value,
-        category: document.getElementById('category').value,
+        amount: parseFloat(amountInput.value),
+        wallet: walletSelect.value,
+        category: categorySelect.value,
         date: document.getElementById('date').value,
         note: document.getElementById('note').value
     };
+
     transactions.push(trans);
     localStorage.setItem(`money_trans_${getMonthKey(viewDate)}`, JSON.stringify(transactions));
-    e.target.reset();
-    updateCategoryOptions();
+    
+    amountInput.value = '';
+    document.getElementById('note').value = '';
+    
     init();
 });
-
 document.querySelectorAll('input[name="transaction-type"]').forEach(r => {
     r.addEventListener('change', updateCategoryOptions);
 });
@@ -210,6 +222,17 @@ function exportToCSV() {
     const a = document.createElement('a');
     a.href = url; a.download = `NunuTracker_${getMonthKey(viewDate)}.csv`;
     a.click();
+}
+
+window.onclick = function(event) {
+    const setupModal = document.getElementById('setup-modal');
+    const deleteModal = document.getElementById('delete-modal');
+    
+    if (event.target == setupModal) {
+    }
+    if (event.target == deleteModal) {
+        closeDeleteModal();
+    }
 }
 
 init();
