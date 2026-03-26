@@ -20,8 +20,8 @@ function init() {
 
 function loadMonthData() {
     const monthKey = getMonthKey(viewDate);
-    transactions = JSON.parse(localStorage.getItem(`nunu_trans_${monthKey}`)) || [];
-    initialBalances = JSON.parse(localStorage.getItem(`nunu_init_${monthKey}`));
+    transactions = JSON.parse(localStorage.getItem(`money_trans_${monthKey}`)) || [];
+    initialBalances = JSON.parse(localStorage.getItem(`money_init_${monthKey}`));
 
     if (!initialBalances) {
         handleMonthTransition();
