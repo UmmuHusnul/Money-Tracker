@@ -50,6 +50,17 @@ function loadMonthData() {
     }
 }
 
+function setDefaultDate() {
+    const today = new Date();
+    if (viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear()) {
+        document.getElementById('date').value = today.toISOString().split('T')[0];
+    } else {
+        const year = viewDate.getFullYear();
+        const month = (viewDate.getMonth() + 1).toString().padStart(2, '0');
+        document.getElementById('date').value = `${year}-${month}-01`;
+    }
+}
+
 function handleMonthTransition() {
     const lastMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
     const lastMonthKey = getMonthKey(lastMonth);
