@@ -1,14 +1,36 @@
 let viewDate = new Date();
 let transactions = [];
-let initialBalances = { cash: 0, bank: 0, qris: 0 };
+let initialBalances = null;
 let myChart;
 
 const categories = {
-    income: ['Gaji', 'Bonus', 'Pemberian', 'Penjualan'],
+    income: ['Gaji', 'Bonus', 'Pemberian', 'Penjualan', 'Lainnya'],
     expense: ['Makanan', 'Transportasi', 'Belanja', 'Hiburan', 'Investasi', 'Tagihan', 'Lainnya']
 };
 
-// --- CORE LOGIC ---
+const toggleSwitch = document.querySelector('#checkbox');
+const currentTheme = localStorage.getItem('theme');
+
+if (currentTheme) {
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    if (currentTheme === 'dark') {
+        toggleSwitch.checked = true;
+        document.querySelector('.mode-icon').textContent = '🌙';
+    }
+}
+
+toggleSwitch.addEventListener('change', (e) => {
+    if (e.target.checked) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        document.querySelector('.mode-icon').textContent = '🌙';
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        document.querySelector('.mode-icon').textContent = '☀️';
+    }
+});
+
 
 function init() {
     updateMonthDisplay();
@@ -43,23 +65,23 @@ function handleMonthTransition() {
         initialBalances = carryOver;
         localStorage.setItem(`money_init_${getMonthKey(viewDate)}`, JSON.stringify(initialBalances));
     } else {
-        // Jika benar-benar baru, tampilkan modal
         document.getElementById('setup-modal').style.display = 'flex';
     }
 }
 
 function saveInitialBalance() {
+    // Otomatis 0 jika kosong
     const cash = parseFloat(document.getElementById('init-cash').value) || 0;
     const bank = parseFloat(document.getElementById('init-bank').value) || 0;
     const qris = parseFloat(document.getElementById('init-qris').value) || 0;
 
+    const key = getMonthKey(viewDate);
     initialBalances = { cash, bank, qris };
-    localStorage.setItem(`money_init_${getMonthKey(viewDate)}`, JSON.stringify(initialBalances));
+    localStorage.setItem(`money_init_${key}`, JSON.stringify(initialBalances));
+    
     document.getElementById('setup-modal').style.display = 'none';
     init();
 }
-
-// --- UI UPDATES ---
 
 function updateCategoryOptions() {
     const type = document.querySelector('input[name="transaction-type"]:checked').value;
@@ -114,8 +136,6 @@ function renderList() {
     });
 }
 
-// --- EVENTS ---
-
 document.getElementById('transaction-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const trans = {
@@ -151,8 +171,6 @@ function changeMonth(offset) {
     init();
 }
 
-// --- UTILS ---
-
 function getMonthKey(date) {
     return `${(date.getMonth() + 1).toString().padStart(2, '0')}_${date.getFullYear()}`;
 }
@@ -182,7 +200,7 @@ function exportToCSV() {
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `MoneyTracker_${getMonthKey(viewDate)}.csv`;
+    a.href = url; a.download = `NunuTracker_${getMonthKey(viewDate)}.csv`;
     a.click();
 }
 
