@@ -47,13 +47,10 @@ function init() {
 
 function loadMonthData() {
     const monthKey = getMonthKey(viewDate);
-    // Mengambil data transaksi terbaru dari storage
     transactions = JSON.parse(localStorage.getItem(`money_trans_${monthKey}`)) || [];
-    initialBalances = JSON.parse(localStorage.getItem(`money_init_${monthKey}`));
-
-    if (!initialBalances) {
-        handleMonthTransition();
-    }
+    
+    // SELALU jalankan transisi bulan untuk memastikan saldo awal sinkron dengan bulan lalu
+    handleMonthTransition();
 }
 
 function setDefaultDate() {
@@ -72,22 +69,32 @@ function setDefaultDate() {
 }
 
 function handleMonthTransition() {
+    const currentMonthKey = getMonthKey(viewDate);
     const lastMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
     const lastMonthKey = getMonthKey(lastMonth);
+    
     const prevTrans = JSON.parse(localStorage.getItem(`money_trans_${lastMonthKey}`)) || [];
     const prevInit = JSON.parse(localStorage.getItem(`money_init_${lastMonthKey}`));
 
     if (prevInit) {
+        // Hitung ulang saldo akhir bulan lalu secara real-time
         let carryOver = { ...prevInit };
         prevTrans.forEach(t => {
             const val = t.type === 'income' ? t.amount : -t.amount;
-            carryOver[t.wallet] += val;
+            if (carryOver.hasOwnProperty(t.wallet)) {
+                carryOver[t.wallet] += val;
+            }
         });
+
+        // Update initialBalances bulan ini dengan hasil hitungan terbaru dari bulan lalu
         initialBalances = carryOver;
-        localStorage.setItem(`money_init_${getMonthKey(viewDate)}`, JSON.stringify(initialBalances));
-        calculateBalances();
+        localStorage.setItem(`money_init_${currentMonthKey}`, JSON.stringify(initialBalances));
     } else {
-        document.getElementById('setup-modal').style.display = 'flex';
+        // Jika benar-benar data baru (tidak ada bulan sebelumnya), baru munculkan modal
+        initialBalances = JSON.parse(localStorage.getItem(`money_init_${currentMonthKey}`));
+        if (!initialBalances) {
+            document.getElementById('setup-modal').style.display = 'flex';
+        }
     }
 }
 
